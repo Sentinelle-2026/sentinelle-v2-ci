@@ -1433,7 +1433,7 @@
             <tr><td>DKR-01 · Daoukro</td><td>N'zi</td><td class="num">6,8</td><td class="num">55 NTU</td><td class="num">240 µS</td><td class="num">95%</td><td class="num">il y a 6 min</td><td><span class="lvl ok">NORMALE</span></td></tr>
             <tr><td>ITY-01 · Zouan-Hounien</td><td>Cavally</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">12%</td><td class="num">21/07 · 04:15</td><td><span class="lvl faible">HORS LIGNE</span></td></tr>
           </table>
-          <div style="margin-top:8px;font-size:10px;color:var(--text-muted)">+ 45 autres stations · <span style="color:#E8720C;font-weight:700;cursor:pointer">voir tout le réseau →</span></div>
+          <div id="eaux-note" style="margin-top:8px;font-size:10px;color:var(--text-muted)">+ 45 autres stations · <span style="color:#E8720C;font-weight:700;cursor:pointer">voir tout le réseau →</span></div>
         </div>
       </div>
     </div>
@@ -1474,7 +1474,7 @@
             <tr><td>AE-771 Katiola</td><td>Coopérative minière CKN</td><td>Or (semi-mécanisé)</td><td>Hambol</td><td class="num">12 km²</td><td class="num" style="color:var(--st-critical);font-weight:700">+8,7%</td><td><span class="lvl critique">MISE EN DEMEURE</span></td></tr>
             <tr><td>AE-802 Divo</td><td>Coopérative Espoir</td><td>Or (semi-mécanisé)</td><td>Lôh-Djiboua</td><td class="num">9 km²</td><td class="num">+0,8%</td><td><span class="lvl ok">EN RÈGLE</span></td></tr>
           </table>
-          <div style="margin-top:8px;font-size:10px;color:var(--text-muted)">+ 134 autres titres · <span style="color:#E8720C;font-weight:700;cursor:pointer">registre complet →</span> · source périmètres : Cadastre Minier (à raccorder via API)</div>
+          <div id="cadastre-note" style="margin-top:8px;font-size:10px;color:var(--text-muted)">+ 134 autres titres · <span style="color:#E8720C;font-weight:700;cursor:pointer">registre complet →</span> · source périmètres : Cadastre Minier (à raccorder via API)</div>
         </div>
         <div class="ccard">
           <h3>🛢 BLOCS PÉTROLIERS OFFSHORE — suivi des installations</h3>
@@ -1856,7 +1856,7 @@
       </svg>
       <div style="display:flex;justify-content:space-between;margin-top:7px;font-size:9.5px;color:var(--text-muted)">
         <span>→ Écoulement de la nappe : SE → NW</span>
-        <span id="rp-transfert">Transfert estimé : <b style="color:var(--st-serious)">45–60 j</b></span>
+        <span id="np-transfert">Transfert estimé : <b style="color:var(--st-serious)">45–60 j</b></span>
       </div>
       </div>
     </div>
@@ -3029,7 +3029,7 @@
 
   /* ---------- TABLES COMPLÈTES (stations + registre) ---------- */
   function lcg(seed) { var s = seed; return function () { s = (s * 48271) % 2147483647; return s / 2147483647; }; }
-  var eauxNote = document.querySelector('#tab-eaux .ccard:last-child > div:last-child');
+  var eauxNote = document.getElementById('eaux-note');
   if (eauxNote) {
     var expandedS = false;
     eauxNote.style.cursor = 'pointer';
@@ -3060,7 +3060,7 @@
       toast('📡 Réseau complet affiché — 52 stations');
     });
   }
-  var permNote = document.querySelector('#tab-cadastre .ccard > div[style*="margin-top"]');
+  var permNote = document.getElementById('cadastre-note');
   if (permNote) {
     var expandedP = false;
     permNote.style.cursor = 'pointer';
@@ -4437,7 +4437,18 @@
 &lt;meta charset=&quot;utf-8&quot;&gt;
 &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
 &lt;title&gt;CarbonConnect CI — Surveillance, simulation et valorisation carbone&lt;/title&gt;
-&lt;link rel=&quot;stylesheet&quot; href=&quot;https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css&quot;&gt;
+&lt;link rel=&quot;stylesheet&quot; href=&quot;https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css&quot; onerror=&quot;__loadCssFallback(this,0)&quot;&gt;
+&lt;script&gt;
+/* Le CDN principal (cdnjs) peut être lent ou bloqué selon le réseau (wifi de site,
+   pare-feu d&#x27;entreprise/établissement) : on prévoit des miroirs de secours pour la
+   feuille de style Leaflet, comme pour les bibliothèques JS plus bas dans le document. */
+var __CSS_FALLBACKS=[&#x27;https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css&#x27;,&#x27;https://unpkg.com/leaflet@1.9.4/dist/leaflet.css&#x27;];
+function __loadCssFallback(link,idx){
+  if(idx&gt;=__CSS_FALLBACKS.length)return;
+  link.onerror=function(){__loadCssFallback(link,idx+1);};
+  link.href=__CSS_FALLBACKS[idx];
+}
+&lt;/script&gt;
 &lt;style&gt;
 :root{
   --abysse:#05090F; --nuit:#0A121C; --pan:#0E1826; --pan2:#13202F; --pan3:#182838;
@@ -5729,8 +5740,27 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;bac
   &lt;/div&gt;
 &lt;/div&gt;
 
-&lt;script src=&quot;https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js&quot;&gt;&lt;/script&gt;
-&lt;script src=&quot;https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js&quot;&gt;&lt;/script&gt;
+&lt;script&gt;
+/* Miroirs de secours pour les 2 bibliothèques externes (cartes, graphiques) : si le CDN
+   principal (cdnjs) échoue — réseau du site d&#x27;accueil, pare-feu, lenteur — on retente
+   automatiquement 2 CDN alternatifs avant d&#x27;abandonner. Sans ce filet, une simple coupure
+   CDN transitoire laisse tous les graphiques vides sans que rien ne l&#x27;indique. */
+var __LIB_FALLBACKS={
+  leaflet:[&#x27;https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js&#x27;,&#x27;https://unpkg.com/leaflet@1.9.4/dist/leaflet.js&#x27;],
+  echarts:[&#x27;https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js&#x27;,&#x27;https://unpkg.com/echarts@5.4.3/dist/echarts.min.js&#x27;]
+};
+function __loadLibFallback(lib,idx){
+  var urls=__LIB_FALLBACKS[lib];
+  if(idx&gt;=urls.length){window[&#x27;__&#x27;+lib+&#x27;Failed&#x27;]=true;return;}
+  var s=document.createElement(&#x27;script&#x27;);
+  s.src=urls[idx];
+  s.onload=function(){if(window.__onLibLoaded)window.__onLibLoaded(lib);};
+  s.onerror=function(){__loadLibFallback(lib,idx+1);};
+  document.head.appendChild(s);
+}
+&lt;/script&gt;
+&lt;script src=&quot;https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js&quot; onerror=&quot;__loadLibFallback(&#x27;leaflet&#x27;,0)&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js&quot; onerror=&quot;__loadLibFallback(&#x27;echarts&#x27;,0)&quot;&gt;&lt;/script&gt;
 &lt;script&gt;
 /* ============================================================================
    CarbonConnect CI — démonstrateur national
@@ -5985,8 +6015,33 @@ const AX={axisLine:{lineStyle:{color:C.ln}},axisLabel:{color:C.srd2,fontFamily:&
 const TT={backgroundColor:&#x27;#13202F&#x27;,borderColor:&#x27;#27405B&#x27;,textStyle:{color:C.txt,fontFamily:&#x27;Times New Roman&#x27;,fontSize:12},
   extraCssText:&#x27;border-radius:4px;box-shadow:0 12px 40px rgba(0,0,0,.6)&#x27;};
 const LEG={textStyle:{color:C.srd,fontFamily:&#x27;Times New Roman&#x27;,fontSize:10},icon:&#x27;roundRect&#x27;,itemWidth:8,itemHeight:8};
-function mk(id,opt){const el=document.getElementById(id);if(!el||!window.echarts)return;
+function mk(id,opt){const el=document.getElementById(id);if(!el)return;
+  if(!window.echarts){
+    /* echarts.js n&#x27;est pas (encore) disponible — plutôt qu&#x27;une case vide sans explication,
+       on le dit, et on mémorise cet appel pour le rejouer automatiquement dès qu&#x27;un des
+       miroirs de secours (__loadLibFallback) aura fini de charger la bibliothèque. */
+    window.__mkQueue=window.__mkQueue||[];
+    window.__mkQueue.push({id:id,opt:opt});
+    el.innerHTML=&#x27;&lt;div style=&quot;padding:16px;color:#7D93A9;font-size:11px&quot;&gt;📡 Graphique indisponible — bibliothèque non chargée. Vérifiez la connexion réseau.&lt;/div&gt;&#x27;;
+    return;
+  }
+  el.innerHTML=&#x27;&#x27;;
   const c=echarts.init(el,null,{renderer:&#x27;canvas&#x27;});c.setOption(opt);charts[id]=c;return c;}
+function __flushMkQueue(){
+  var q=window.__mkQueue||[];window.__mkQueue=[];
+  q.forEach(function(item){mk(item.id,item.opt);});
+  setTimeout(function(){Object.values(charts).forEach(function(c){try{c.resize()}catch(e){}});},60);
+}
+window.__onLibLoaded=function(lib){
+  if(lib===&#x27;echarts&#x27;)__flushMkQueue();
+  if(lib===&#x27;leaflet&#x27;&amp;&amp;typeof ready!==&#x27;undefined&#x27;&amp;&amp;ready.carte){ready.carte=0;if(typeof go===&#x27;function&#x27;)go(&#x27;carte&#x27;);}
+};
+/* Un dégradé echarts (LinearGradient) doit être construit alors que echarts.js peut ne pas
+   encore être chargé (CDN lent/bloqué) : mk() se protège en interne, mais l&#x27;appel
+   &quot;new echarts.graphic.LinearGradient(...)&quot; fait partie des ARGUMENTS de mk() et s&#x27;exécute
+   donc AVANT que sa garde interne ne soit atteinte — sans ce repli, une simple lenteur réseau
+   plante tout l&#x27;écran (dashboard vide) au lieu de dégrader proprement en couleur unie. */
+function grad(stops){return window.echarts?new echarts.graphic.LinearGradient(0,0,0,1,stops):stops[0].color;}
 addEventListener(&#x27;resize&#x27;,()=&gt;Object.values(charts).forEach(c=&gt;{try{c.resize()}catch(e){}}));
 
 const MOIS=[&#x27;Jan&#x27;,&#x27;Fév&#x27;,&#x27;Mar&#x27;,&#x27;Avr&#x27;,&#x27;Mai&#x27;,&#x27;Juin&#x27;,&#x27;Juil&#x27;,&#x27;Aoû&#x27;,&#x27;Sep&#x27;,&#x27;Oct&#x27;,&#x27;Nov&#x27;,&#x27;Déc&#x27;];
@@ -6051,7 +6106,7 @@ INIT.dash=function(){
     yAxis:{type:&#x27;value&#x27;,name:&#x27;Mt CO₂e&#x27;,nameTextStyle:{color:C.srd2,fontFamily:&#x27;Times New Roman&#x27;,fontSize:9},...AX},
     series:[
      {name:&#x27;Inventaire vérifié&#x27;,type:&#x27;line&#x27;,data:hist,symbol:&#x27;none&#x27;,lineStyle:{width:2.4,color:C.txt},itemStyle:{color:C.txt},
-      areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:&#x27;rgba(234,241,247,.16)&#x27;},{offset:1,color:&#x27;rgba(234,241,247,0)&#x27;}])}},
+      areaStyle:{color:grad([{offset:0,color:&#x27;rgba(234,241,247,.16)&#x27;},{offset:1,color:&#x27;rgba(234,241,247,0)&#x27;}])}},
      {name:&#x27;Tendanciel (BAU)&#x27;,type:&#x27;line&#x27;,data:bau,symbol:&#x27;none&#x27;,itemStyle:{color:C.al},lineStyle:{width:2,color:C.al,type:&#x27;dashed&#x27;}},
      {name:&#x27;CDN 2035 (inconditionnelle)&#x27;,type:&#x27;line&#x27;,data:cdn,symbol:&#x27;none&#x27;,itemStyle:{color:C.or},lineStyle:{width:2.2,color:C.or}},
      {name:&#x27;CDN 2035 (conditionnelle) / 1,5 °C&#x27;,type:&#x27;line&#x27;,data:paris,symbol:&#x27;none&#x27;,itemStyle:{color:C.man},lineStyle:{width:2.2,color:C.man},
@@ -7011,7 +7066,7 @@ INIT.marche=function(){
       {type:&#x27;value&#x27;,name:&#x27;k crédits&#x27;,nameTextStyle:{color:C.srd2,fontFamily:&#x27;Times New Roman&#x27;,fontSize:9},...AX,splitLine:{show:false}}],
     series:[{name:&#x27;Volume&#x27;,type:&#x27;bar&#x27;,yAxisIndex:1,data:vol,itemStyle:{color:&#x27;rgba(52,183,223,.25)&#x27;}},
       {name:&#x27;Prix spot&#x27;,type:&#x27;line&#x27;,data:px,symbol:&#x27;none&#x27;,itemStyle:{color:C.or},lineStyle:{width:2.2,color:C.or},
-        areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:&#x27;rgba(232,179,65,.22)&#x27;},{offset:1,color:&#x27;rgba(232,179,65,0)&#x27;}])}}]});
+        areaStyle:{color:grad([{offset:0,color:&#x27;rgba(232,179,65,.22)&#x27;},{offset:1,color:&#x27;rgba(232,179,65,0)&#x27;}])}}]});
 
   let mid=14.45;
   function book(){
