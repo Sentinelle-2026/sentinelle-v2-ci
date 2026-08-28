@@ -103,6 +103,15 @@
   #appmenu span:hover { background: rgba(120,170,230,0.1); color: var(--text-primary); }
   #appmenu span.on { background: rgba(232,114,12,0.18); color: #E8720C; font-weight: 700; }
   .appbar-right { margin-left: auto; display: flex; align-items: center; gap: 12px; flex: none; }
+  /* Entre le mode "plein écran large" et le mode tiroir mobile (1100px), les portables
+     standards (1280-1500px, ou un ordinateur plus large mais zoomé à 110-125%) laissent
+     peu de place au menu horizontal : on resserre le sous-titre, les onglets et l'espacement
+     pour que le menu défile moins souvent, plutôt que de rester coincé sur 1-2 onglets visibles. */
+  @media (max-width: 1500px) {
+    #appbar > div:nth-child(2) { max-width: 190px; }
+    #appmenu span { padding: 6px 8px; font-size: 10.5px; }
+    .appbar-right { gap: 7px; }
+  }
   .live {
     display: inline-flex; align-items: center; gap: 7px; font-size: 10px; font-weight: 800; letter-spacing: 1.2px;
     color: #7ee787; border: 1px solid rgba(126,231,135,0.35); border-radius: 999px; padding: 4px 12px;
@@ -120,11 +129,21 @@
   .user-chip > div span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
   /* ================= BANDEAU FONCTIONNALITÉS ================= */
+  /* Chaque tuile (icône + libellé) est en white-space:nowrap : en dessous d'une certaine
+     largeur, 6 tuiles sur une seule ligne sans marge de manœuvre finissent par se chevaucher
+     (le texte déborde de sa tuile, par-dessus la suivante — ex. "DÉTECTION SATELLITE
+     NATIONALE"). On préfère donc un bandeau qui défile horizontalement dès que ça ne tient
+     plus, à toute largeur d'écran, plutôt que de laisser les tuiles se comprimer et se
+     chevaucher. */
   #featstrip {
-    height: 44px; flex: none; display: flex; align-items: stretch; justify-content: space-around;
+    height: 44px; flex: none; display: flex; align-items: stretch; justify-content: flex-start;
     background: #0a1019; border-bottom: 1px solid var(--border); padding: 0 8px; z-index: 20;
+    overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.25) transparent;
   }
-  .feat { display: flex; align-items: center; gap: 9px; padding: 0 10px; min-width: 0; }
+  #featstrip::-webkit-scrollbar { height: 4px; }
+  #featstrip::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.25); border-radius: 3px; }
+  .feat { display: flex; align-items: center; gap: 9px; padding: 0 14px; flex: none; min-width: 0; }
   .feat + .feat { border-left: 1px solid rgba(160,190,230,0.08); }
   .feat .fi { width: 26px; height: 26px; flex: none; border-radius: 50%; display: grid; place-items: center; font-size: 13px;
     background: rgba(232,114,12,0.12); border: 1px solid rgba(232,114,12,0.35); }
