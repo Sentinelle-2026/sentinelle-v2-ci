@@ -1449,7 +1449,7 @@
         </div>
         <div class="ccard">
           <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 14px">
-            <h3 style="margin:0">⚖ ANCRAGE LÉGAL — Code minier ivoirien (loi n°2014-138 du 24/03/2014)</h3>
+            <h3 style="margin:0">⚖ ANCRAGE LÉGAL DE L'ORPAILLAGE — Code minier ivoirien (loi n°2014-138 du 24/03/2014)</h3>
             <span class="dq mesure" title="Catégories, seuils et sanctions vérifiés dans le texte de loi et son décret d'application n°2014-397">TEXTE DE LOI</span>
           </div>
           <div class="sub">Les statuts affichés ci-dessous (« EN RÈGLE », « AVERTISSEMENT », « MISE EN DEMEURE ») ne sont pas de simples libellés : ils renvoient à de vraies catégories et obligations du droit minier ivoirien.</div>
@@ -1458,7 +1458,7 @@
             <div class="stattile" style="--tile-accent:#fab219"><div class="label">Autorisation d'exploitation artisanale (AEA)</div><div class="value" style="font-size:14px">≤ 25 ha</div><div class="delta">2 ans renouvelable · réservée aux nationaux/coopératives (art. 65, 67, 69)</div></div>
             <div class="stattile" style="--tile-accent:#ff5a4e"><div class="label">Exploitation sans titre</div><div class="value" style="font-size:14px">1 à 5 ans</div><div class="delta bad">emprisonnement + amendes (art. 180-183) · confiscation (art. 188)</div></div>
           </div>
-          <div class="dq-legend">⚖ L'AEA (autorisation d'exploitation artisanale, ce que le registre appelle ici les titres « AE ») encadre légalement l'orpaillage : explosifs et produits chimiques y sont interdits (art. 68), et sa superficie est plafonnée à 25 ha — soit 0,25 km². Point de vigilance : le titre AE-771 Katiola ci-dessous affiche 12 km², très au-delà de ce plafond légal par catégorie ; Sentinelle ne vérifie aujourd'hui que l'écart à l'emprise <em>déclarée</em> du titre (colonne « Écart d'emprise »), pas sa conformité au plafond légal de sa catégorie — un contrôle croisé par type de titre serait une amélioration naturelle. Réforme récente confirmée : l'ordonnance n°2022-239 du 30/03/2022 permet la confiscation sans condamnation préalable en cas de fuite et exclut l'orpaillage illégal du pouvoir de transaction administrative — l'orpaillage clandestin ne peut donc plus se régler par une simple amende négociée.</div>
+          <div class="dq-legend">⚖ L'AEA (autorisation d'exploitation artisanale — les titres « AE » du registre) encadre légalement l'orpaillage : superficie plafonnée à 25 ha (0,25 km²), explosifs et produits chimiques interdits (art. 68). <strong>À vérifier :</strong> le titre AE-771 Katiola ci-dessous affiche 12 km², bien au-delà de ce plafond — Sentinelle ne compare aujourd'hui que l'écart à l'emprise <em>déclarée</em> du titre, pas sa conformité au plafond légal de sa catégorie (piste d'amélioration). Depuis la réforme de 2022 (ordonnance n°2022-239), l'orpaillage clandestin ne se règle plus par une simple amende : confiscation possible sans jugement préalable en cas de flagrant délit.</div>
         </div>
         <div class="ccard">
           <h3>⛏ REGISTRE DES TITRES — audit satellite automatique</h3>
@@ -6054,7 +6054,7 @@ const INIT={};
 /* ============================ TABLEAU DE BORD ============================ */
 INIT.dash=function(){
   const KPI=[
-   {k:&#x27;Émissions totales&#x27;,v:&#x27;110,3&#x27;,u:&#x27;Mt CO₂e · 2022&#x27;,d:&#x27;▼ 6,8 % vs 2021&#x27;,c:&#x27;down&#x27;,a:C.lat},
+   {k:&#x27;Émissions totales&#x27;,v:&#x27;110,3&#x27;,u:&#x27;Mt CO₂e · 2022&#x27;,d:&#x27;▲ 3,3 % vs 2021&#x27;,c:&#x27;up&#x27;,a:C.lat},
    {k:&#x27;Scope 1 — direct&#x27;,v:&#x27;75,0&#x27;,u:&#x27;Mt CO₂e · 68 %&#x27;,d:&#x27;▼ 4,2 %&#x27;,c:&#x27;down&#x27;,a:C.lat},
    {k:&#x27;Scope 2 — énergie&#x27;,v:&#x27;19,8&#x27;,u:&#x27;Mt CO₂e · 18 %&#x27;,d:&#x27;▼ 11,3 %&#x27;,c:&#x27;down&#x27;,a:C.or},
    {k:&#x27;Scope 3 — chaîne de valeur&#x27;,v:&#x27;15,5&#x27;,u:&#x27;Mt CO₂e · 14 %&#x27;,d:&#x27;▲ 2,1 %&#x27;,c:&#x27;up&#x27;,a:C.vio}];
@@ -6140,7 +6140,12 @@ INIT.dash=function(){
        {name:&#x27;Agriculture&#x27;,value:8.91,itemStyle:{color:&#x27;#34B7DF&#x27;}},
        {name:&#x27;Déchets&#x27;,value:4.02,itemStyle:{color:&#x27;#5EC7E6&#x27;}}]}]});
 
-  const wf=[118.40,3.74,2.30,-6.03,-4.60,-2.59,-0.86,110.35];
+  /* Ancré sur l&#x27;inventaire réel CDN 3.0 (2022 = 110,35 Mt) et sur la même trajectoire
+     historique que le graphique &quot;Trajectoire vs CDN 3.0&quot; (+3,54 Mt/an) : 2021 = 106,81 Mt.
+     Les postes intermédiaires racontent une histoire cohérente avec le reste de la
+     plateforme — la croissance minière/portuaire dépasse les gains de sobriété/renouvelable
+     déjà engagés, d&#x27;où la hausse nette malgré des leviers de réduction bien réels. */
+  const wf=[106.81,5.24,3.20,-2.10,-1.60,-0.90,-0.30,110.35];
   const lbl=[&#x27;2021&#x27;,&#x27;Expansion minière&#x27;,&#x27;Trafic portuaire&#x27;,&#x27;Renouvelables&#x27;,&#x27;Efficacité énergétique&#x27;,&#x27;Réduction torchage&#x27;,&#x27;Reboisement&#x27;,&#x27;2022&#x27;];
   let acc=0;const aux=[],pos=[],neg=[];
   wf.forEach((v,i)=&gt;{if(i===0||i===wf.length-1){aux.push(0);pos.push(v);neg.push(&#x27;-&#x27;);}
