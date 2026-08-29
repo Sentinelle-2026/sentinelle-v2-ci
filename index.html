@@ -136,13 +136,23 @@
      plus, à toute largeur d'écran, plutôt que de laisser les tuiles se comprimer et se
      chevaucher. */
   #featstrip {
-    height: 44px; flex: none; display: flex; align-items: stretch; justify-content: flex-start;
-    background: #0a1019; border-bottom: 1px solid var(--border); padding: 0 8px; z-index: 20;
-    overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin;
+    height: 44px; flex: none; position: relative; background: #0a1019;
+    border-bottom: 1px solid var(--border); z-index: 20;
+  }
+  #featstrip .hscroll {
+    height: 100%; display: flex; align-items: stretch; justify-content: flex-start;
+    padding: 0 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin;
     scrollbar-color: rgba(255,255,255,0.25) transparent;
   }
-  #featstrip::-webkit-scrollbar { height: 4px; }
-  #featstrip::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.25); border-radius: 3px; }
+  #featstrip .hscroll::-webkit-scrollbar { height: 4px; }
+  #featstrip .hscroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.25); border-radius: 3px; }
+  /* Indicateur de défilement : un vrai calque frère hors du conteneur qui défile
+     (et non un ::after ou un masque appliqué sur la boîte qui scrolle), ancré au bord
+     du conteneur EXTÉRIEUR non-scrollable — il ne peut donc pas dériver avec le
+     défilement interne, quel que soit le moteur de rendu (bug constaté sur iPhone avec
+     les deux approches précédentes). Masqué par défaut, activé et coloré en mobile
+     (voir plus bas) selon le fond réel de chaque bandeau. */
+  .edge-fade { position: absolute; top: 0; right: 0; bottom: 0; width: 34px; pointer-events: none; z-index: 5; display: none; }
   .feat { display: flex; align-items: center; gap: 9px; padding: 0 14px; flex: none; min-width: 0; }
   .feat + .feat { border-left: 1px solid rgba(160,190,230,0.08); }
   .feat .fi { width: 26px; height: 26px; flex: none; border-radius: 50%; display: grid; place-items: center; font-size: 13px;
@@ -195,10 +205,13 @@
 
   #center { flex: 1; display: flex; flex-direction: column; min-width: 0; background: #060a10; }
   #tabs {
-    height: 38px; flex: none; display: flex; align-items: stretch; background: #0a1019;
-    border-bottom: 1px solid var(--border); padding: 0 8px; gap: 3px; overflow-x: auto;
+    height: 38px; flex: none; position: relative; background: #0a1019;
+    border-bottom: 1px solid var(--border);
   }
-  #tabs::-webkit-scrollbar { height: 0; }
+  #tabs .hscroll {
+    height: 100%; display: flex; align-items: stretch; padding: 0 8px; gap: 3px; overflow-x: auto;
+  }
+  #tabs .hscroll::-webkit-scrollbar { height: 0; }
   .tab {
     display: flex; align-items: center; padding: 0 13px; margin-top: 5px; font-size: 10.5px; font-weight: 700;
     letter-spacing: 0.4px; color: var(--text-muted); cursor: pointer; border: 1px solid transparent; border-bottom: none;
@@ -740,39 +753,73 @@
     #appmenu span { padding: 6px 8px; }
     .appbar-right { flex: none; gap: 6px; }
     .mobile-toggle { padding: 7px 8px; font-size: 10px; }
-    #featstrip { overflow-x: auto; justify-content: flex-start; -webkit-overflow-scrolling: touch; }
-    #featstrip::-webkit-scrollbar { display: none; }
+    #featstrip .hscroll { justify-content: flex-start; }
+    #featstrip .hscroll::-webkit-scrollbar { display: none; }
     .feat { flex: none; min-width: 160px; }
 
     /* La bande de fonctionnalités et la barre d'onglets défilent horizontalement sur
        téléphone mais se coupaient net au bord de l'écran, sans indice visuel qu'il y a
-       plus de contenu à faire glisser. Un fondu-image (mask) sur transparent ne se voit
-       quasiment pas quand le fond est clair ou déjà sombre : on utilise à la place un
-       calque de dégradé opaque, vers la vraie couleur de fond de chaque bande, qui reste
-       visible quel que soit le contenu en dessous. */
-    #featstrip, #tabs { position: relative; }
-    #featstrip::after, #tabs::after {
-      content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 34px;
-      pointer-events: none; z-index: 5;
-    }
-    #featstrip::after { background: linear-gradient(to right, rgba(255,255,255,0), #ffffff 82%); }
-    #tabs::after { background: linear-gradient(to right, rgba(10,16,25,0), #0a1019 82%); }
-    #tabs { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.3) transparent; }
-    #tabs::-webkit-scrollbar { height: 4px; }
-    #tabs::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 3px; }
+       plus de contenu à faire glisser. Deux approches ont échoué sur téléphone réel :
+       un calque ::after en position:absolute À L'INTÉRIEUR du conteneur qui scrolle
+       (il dérive avec le défilement, finit au milieu de l'onglet actif), puis un masque
+       CSS appliqué sur la boîte elle-même (toujours décalé sur iPhone/Safari malgré des
+       tests concluants sous Chromium). #featstrip/#tabs sont donc maintenant de simples
+       boîtes fixes (position:relative) qui contiennent un conteneur défilant .hscroll
+       ET un vrai calque frère .edge-fade, positionné en absolu par rapport à la boîte
+       fixe : structurellement, il ne peut pas dériver avec le défilement interne, quel
+       que soit le moteur de rendu. Les couleurs du dégradé reprennent le fond réel de
+       chaque bandeau (voir la surcouche thème plus haut : #featstrip est blanc,
+       #tabs est vert très pâle — un fond sombre aurait produit une bande visible non
+       raccordée, comme sur l'ancien correctif). */
+    .edge-fade { display: block; }
+    #featstrip .edge-fade { background: linear-gradient(to right, rgba(255,255,255,0), #ffffff 82%); }
+    #tabs .edge-fade { background: linear-gradient(to right, rgba(247,250,246,0), #f7faf6 82%); }
+    #tabs .hscroll { scrollbar-width: thin; scrollbar-color: rgba(110,130,110,0.35) transparent; }
+    #tabs .hscroll::-webkit-scrollbar { height: 4px; }
+    #tabs .hscroll::-webkit-scrollbar-thumb { background: rgba(110,130,110,0.35); border-radius: 3px; }
+
+    /* #layer-switch (3 boutons) partage la ligne top:12px avec #zoom-ctl. Sur un
+       téléphone étroit, les 3 libellés ne tiennent plus sur une seule ligne à côté du
+       bloc zoom (débordement constaté par script de mesure : les deux se chevauchent).
+       On le borne en largeur et on le laisse passer sur 2 lignes plutôt que de
+       chevaucher #zoom-ctl. */
+    #layer-switch { max-width: calc(100vw - 24px - 46px); flex-wrap: wrap; row-gap: 4px; }
 
     /* Les légendes flottantes de la carte (risque, stations) étaient centrées sans
        largeur maximale : sur un écran de téléphone, leur contenu dépassait des deux
-       côtés et se coupait net. On les borne à la largeur de l'écran et on les laisse
-       passer à la ligne au lieu de déborder. */
-    #conc-legend, #maplegend2 {
-      max-width: calc(100vw - 24px); left: 12px; right: 12px; transform: none;
-      flex-wrap: wrap; justify-content: center;
+       côtés et se coupait net. Un premier correctif les avait bornées en largeur SANS
+       les décaler, ce qui les a fait chevaucher #layer-switch/#zoom-ctl juste
+       au-dessus (les trois partagent top:12px — chevauchement confirmé par script de
+       mesure). #conc-legend est donc repoussée sous cette rangée, assez bas pour
+       rester dégagée même quand #layer-switch passe sur 2 lignes, et resserrée pour
+       tenir sur une ou deux lignes plutôt que de déborder. */
+    /* Repoussée sous la ligne top:12px tout entière : #zoom-ctl (colonne de 3 boutons
+       empilés) est plus haut que #layer-switch même quand celui-ci passe sur 2 lignes,
+       donc c'est sa hauteur qui fixe le dégagement nécessaire (mesuré ~106px). */
+    #conc-legend {
+      top: 128px; max-width: calc(100vw - 24px); left: 12px; right: 12px; transform: none;
+      flex-wrap: wrap; justify-content: center; padding: 6px 10px; gap: 8px; font-size: 9px;
     }
-    /* #maplegend2 élargie à toute la largeur venait alors chevaucher #scalebar et
-       #coords-hud, qui partagent la même ligne bottom:12px sur desktop. On l'empile
-       au-dessus plutôt que de laisser les trois HUD se superposer. */
-    #maplegend2 { bottom: 54px; }
+    #conc-legend .swc { width: 9px; height: 9px; }
+
+    /* La case « CONCENTRATION (NTU) » (légende du mode satellite HD, actif par défaut
+       au chargement — voir « satellite par défaut au chargement » plus bas dans le
+       script) gardait sa mise en page desktop : titre + 5 niveaux + note de flux +
+       curseur d'opacité, soit un pavé disproportionné sur un écran de téléphone. On la
+       resserre (police, puces, marges) et on masque la note de flux, purement
+       explicative, pour ne garder que l'essentiel : les niveaux de concentration et le
+       réglage d'opacité. On la repousse aussi sous #conc-legend pour ne pas s'y
+       superposer. */
+    #plume-legend { top: 182px; min-width: 0; max-width: 46vw; padding: 7px 9px; }
+    #plume-legend .pl-title { font-size: 8.5px; margin-bottom: 4px; }
+    #plume-legend .pl-row { font-size: 9px; padding: 1px 0; gap: 5px; }
+    #plume-legend .pl-sw { width: 10px; height: 8px; }
+    #plume-legend .pl-flux-note { display: none; }
+
+    #maplegend2 {
+      max-width: calc(100vw - 24px); left: 12px; right: 12px; transform: none;
+      flex-wrap: wrap; justify-content: center; bottom: 54px;
+    }
 
     /* panneaux gauche/droite → tiroirs superposés au-dessus de la carte */
     #main { position: relative; }
@@ -819,8 +866,11 @@
     /* Sur téléphone, 4 boutons avec icône + texte (Carbone/Filtres/Analyse/Plus) ne
        laissent plus assez de place pour afficher "SENTINELLE CI" en entier : le nom
        se coupait au milieu d'un mot. On passe ces boutons en icône seule (le libellé
-       reste lisible par un lecteur d'écran via aria-label) pour libérer la place. */
-    .mobile-toggle .mt-label { display: none; }
+       reste lisible par un lecteur d'écran via aria-label) pour libérer la place —
+       SAUF Carbone : 🌍 seul ne dit rien du module qu'il ouvre (contrairement à
+       ☰/📋/⋯ qui sont des icônes d'interface courantes), donc son libellé reste
+       affiché en toutes circonstances. */
+    .mobile-toggle:not(#btn-toggle-carbone) .mt-label { display: none; }
     .mobile-toggle { padding: 7px 9px; font-size: 14px; }
     /* le sélecteur de rôle reste accessible : copié en haut du tiroir Filtres sur téléphone */
     #role-select-mobile { display: block; width: 100%; margin-bottom: 12px; background: var(--inset);
@@ -838,6 +888,9 @@
   @media (max-width: 480px) {
     .ind-grid, .coords-grid { grid-template-columns: 1fr; }
     #tabs .tab { padding: 0 9px; font-size: 9.5px; }
+    /* Sur les téléphones les plus étroits (≤375px), garder le libellé "Carbone" visible
+       peut à nouveau faire déborder "SENTINELLE CI" : on réduit un peu plus la marque. */
+    .brand { font-size: 12px; }
     .role-select { max-width: 80px; }
   }
 </style>
@@ -871,12 +924,15 @@
 </header>
 
 <div id="featstrip">
-  <div class="feat"><div class="fi">🛰</div><div><b>DÉTECTION SATELLITE NATIONALE</b><i>322 000 km² couverts tous les 5 jours</i></div></div>
-  <div class="feat"><div class="fi">📶</div><div><b>CONFIRMATION RADAR</b><i>Sentinel-1 SAR · insensible aux nuages</i></div></div>
-  <div class="feat"><div class="fi">📡</div><div><b>RÉSEAU DE CAPTEURS IN SITU</b><i>52 stations · pH · turbidité · nappes</i></div></div>
-  <div class="feat"><div class="fi">🧭</div><div><b>SIMULATION 2D/3D DES POLLUANTS</b><i>sols sédimentaires · hydrogéologie locale · saisons</i></div></div>
-  <div class="feat"><div class="fi">🚨</div><div><b>ALERTES TEMPS RÉEL</b><i>SMS / e-mail géolocalisés aux autorités · délai &lt; 1 h après dépassement de seuil</i></div></div>
-  <div class="feat"><div class="fi">🎯</div><div><b>AIDE À LA DÉCISION</b><i>priorisation des interventions terrain</i></div></div>
+  <div class="hscroll">
+    <div class="feat"><div class="fi">🛰</div><div><b>DÉTECTION SATELLITE NATIONALE</b><i>322 000 km² couverts tous les 5 jours</i></div></div>
+    <div class="feat"><div class="fi">📶</div><div><b>CONFIRMATION RADAR</b><i>Sentinel-1 SAR · insensible aux nuages</i></div></div>
+    <div class="feat"><div class="fi">📡</div><div><b>RÉSEAU DE CAPTEURS IN SITU</b><i>52 stations · pH · turbidité · nappes</i></div></div>
+    <div class="feat"><div class="fi">🧭</div><div><b>SIMULATION 2D/3D DES POLLUANTS</b><i>sols sédimentaires · hydrogéologie locale · saisons</i></div></div>
+    <div class="feat"><div class="fi">🚨</div><div><b>ALERTES TEMPS RÉEL</b><i>SMS / e-mail géolocalisés aux autorités · délai &lt; 1 h après dépassement de seuil</i></div></div>
+    <div class="feat"><div class="fi">🎯</div><div><b>AIDE À LA DÉCISION</b><i>priorisation des interventions terrain</i></div></div>
+  </div>
+  <div class="edge-fade" aria-hidden="true"></div>
 </div>
 
 <div id="main">
@@ -1045,12 +1101,15 @@
   <!-- ---------- CENTRE ---------- -->
   <section id="center">
     <div id="tabs">
-      <div class="tab on" data-view="tab-carte">🗺 CARTE NATIONALE</div>
-      <div class="tab" data-view="tab-imagerie">🛰 IMAGERIE AVANT/APRÈS</div>
-      <div class="tab" data-view="tab-eaux">💧 EAUX, AIR &amp; CAPTEURS</div>
-      <div class="tab" data-view="tab-cadastre">⛏ CADASTRE &amp; PERMIS</div>
-      <div class="tab" data-view="tab-alerts">🚨 ALERTES &amp; RAPPORTS</div>
-      <div class="tab" data-view="tab-stats">📊 STATISTIQUES</div>
+      <div class="hscroll">
+        <div class="tab on" data-view="tab-carte">🗺 CARTE NATIONALE</div>
+        <div class="tab" data-view="tab-imagerie">🛰 IMAGERIE AVANT/APRÈS</div>
+        <div class="tab" data-view="tab-eaux">💧 EAUX, AIR &amp; CAPTEURS</div>
+        <div class="tab" data-view="tab-cadastre">⛏ CADASTRE &amp; PERMIS</div>
+        <div class="tab" data-view="tab-alerts">🚨 ALERTES &amp; RAPPORTS</div>
+        <div class="tab" data-view="tab-stats">📊 STATISTIQUES</div>
+      </div>
+      <div class="edge-fade" aria-hidden="true"></div>
     </div>
 
     <!-- ===== VUE CARTE NATIONALE ===== -->
@@ -1240,7 +1299,7 @@
         <div id="plume-legend" class="map-hud glass">
           <div class="pl-title" id="pl-title">CONCENTRATION (NTU)</div>
           <div id="pl-rows"></div>
-          <div class="pl-flux"><span style="color:#2e6da8;font-size:13px">➤</span> Flux de migration (sens d'écoulement)</div>
+          <div class="pl-flux pl-flux-note"><span style="color:#2e6da8;font-size:13px">➤</span> Flux de migration (sens d'écoulement)</div>
           <div class="pl-flux" style="display:flex;align-items:center;gap:7px">
             <span title="Transparence du panache : les infrastructures de l'imagerie restent visibles">☀ Opacité</span>
             <input type="range" id="plume-alpha" min="20" max="100" value="55" style="flex:1;accent-color:#E8720C;height:3px">
