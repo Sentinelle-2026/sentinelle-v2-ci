@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
 <title>Sentinelle CI — Plateforme nationale de surveillance des sites miniers et pétroliers</title>
 <!-- ===== Progressive Web App : installation sur écran d'accueil (voir manifest.json et sw.js) ===== -->
 <link rel="manifest" href="manifest.json">
@@ -46,7 +46,7 @@
     --accent-grad: linear-gradient(90deg, #72D679, #1b5e20);
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { height: 100%; overflow: hidden; overscroll-behavior: none; touch-action: pan-x pan-y; }
+  html, body { height: 100%; overflow: hidden; overscroll-behavior: none; touch-action: pan-x pan-y pinch-zoom; }
   body {
     font-family: Georgia, Cambria, "Times New Roman", "Liberation Serif", serif;
     background: var(--page); color: var(--text-primary);
@@ -390,11 +390,20 @@
      (coordonnées brutes, seuils de détection, options UTM) qu'un décideur
      n'a pas besoin de manipuler pour comprendre et valider une situation.
      Les rôles Opérateur/Régulateur gardent le panneau technique complet. */
-  body[data-role="decideur"] .tech-only { display: none !important; }
-  .decideur-only-note { display: none; font-size: 10px; color: var(--esmg); font-weight: 700;
+  body[data-role="decideur"] .tech-only, body[data-role="public"] .tech-only { display: none !important; }
+  .decideur-only-note, .public-only-note { display: none; font-size: 10px; color: var(--esmg); font-weight: 700;
     background: var(--inset); border: 1px dashed var(--border-strong); border-radius: 8px;
     padding: 7px 9px; margin: 4px 0 10px; line-height: 1.5; }
   body[data-role="decideur"] .decideur-only-note { display: block; }
+  body[data-role="public"] .public-only-note { display: block; }
+  /* Accès public restreint sur les paramètres de laboratoire sensibles (DBO5, DCO, MES,
+     mercure, cyanure) : le rôle Public voit un statut de conformité, pas la valeur chiffrée
+     géolocalisée. Les rôles Décideur/Opérateur/Régulateur gardent le détail complet. */
+  .lab-public-status { display: none; flex-direction: column; gap: 8px; align-items: flex-start;
+    padding: 14px; background: var(--inset); border: 1px dashed var(--border-strong); border-radius: 9px; }
+  .lab-public-status .lab-status-note { font-size: 10px; color: var(--text-muted); line-height: 1.5; }
+  body[data-role="public"] .lab-detail { display: none !important; }
+  body[data-role="public"] .lab-public-status { display: flex; }
   .role-select {
     background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.28); color: #fff;
     border-radius: 8px; padding: 5px 9px; font-size: 10.5px; font-weight: 700; cursor: pointer; letter-spacing: 0.2px;
@@ -735,6 +744,36 @@
     #featstrip::-webkit-scrollbar { display: none; }
     .feat { flex: none; min-width: 160px; }
 
+    /* La bande de fonctionnalités et la barre d'onglets défilent horizontalement sur
+       téléphone mais se coupaient net au bord de l'écran, sans indice visuel qu'il y a
+       plus de contenu à faire glisser. Un fondu-image (mask) sur transparent ne se voit
+       quasiment pas quand le fond est clair ou déjà sombre : on utilise à la place un
+       calque de dégradé opaque, vers la vraie couleur de fond de chaque bande, qui reste
+       visible quel que soit le contenu en dessous. */
+    #featstrip, #tabs { position: relative; }
+    #featstrip::after, #tabs::after {
+      content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 34px;
+      pointer-events: none; z-index: 5;
+    }
+    #featstrip::after { background: linear-gradient(to right, rgba(255,255,255,0), #ffffff 82%); }
+    #tabs::after { background: linear-gradient(to right, rgba(10,16,25,0), #0a1019 82%); }
+    #tabs { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.3) transparent; }
+    #tabs::-webkit-scrollbar { height: 4px; }
+    #tabs::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 3px; }
+
+    /* Les légendes flottantes de la carte (risque, stations) étaient centrées sans
+       largeur maximale : sur un écran de téléphone, leur contenu dépassait des deux
+       côtés et se coupait net. On les borne à la largeur de l'écran et on les laisse
+       passer à la ligne au lieu de déborder. */
+    #conc-legend, #maplegend2 {
+      max-width: calc(100vw - 24px); left: 12px; right: 12px; transform: none;
+      flex-wrap: wrap; justify-content: center;
+    }
+    /* #maplegend2 élargie à toute la largeur venait alors chevaucher #scalebar et
+       #coords-hud, qui partagent la même ligne bottom:12px sur desktop. On l'empile
+       au-dessus plutôt que de laisser les trois HUD se superposer. */
+    #maplegend2 { bottom: 54px; }
+
     /* panneaux gauche/droite → tiroirs superposés au-dessus de la carte */
     #main { position: relative; }
     #left, #right {
@@ -775,8 +814,14 @@
      disparaître d'une fenêtre d'ordinateur en plein écran plus étroite que 1100px */
   @media (max-width: 640px) {
     .role-select, .user-chip { display: none; }
-    .brand { font-size: 12.5px; }
+    .brand { font-size: 13.5px; }
     .brand-mark { width: 28px; height: 28px; }
+    /* Sur téléphone, 4 boutons avec icône + texte (Carbone/Filtres/Analyse/Plus) ne
+       laissent plus assez de place pour afficher "SENTINELLE CI" en entier : le nom
+       se coupait au milieu d'un mot. On passe ces boutons en icône seule (le libellé
+       reste lisible par un lecteur d'écran via aria-label) pour libérer la place. */
+    .mobile-toggle .mt-label { display: none; }
+    .mobile-toggle { padding: 7px 9px; font-size: 14px; }
     /* le sélecteur de rôle reste accessible : copié en haut du tiroir Filtres sur téléphone */
     #role-select-mobile { display: block; width: 100%; margin-bottom: 12px; background: var(--inset);
       border: 1px solid var(--border); border-radius: 7px; padding: 8px 10px; font-size: 11px; color: var(--text-primary); }
@@ -800,7 +845,7 @@
 <body data-palette="#E8720C,#d95926,#199e70" data-role="decideur">
 
 <header id="appbar">
-  <div class="brand-mark"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiB2aWV3Qm94PSIwIDAgMjAwIDIwMCI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIHJ4PSIyNiIgZmlsbD0iIzBlN2VhOCIvPjx0ZXh0IHg9IjEwMCIgeT0iODgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJHZW9yZ2lhLHNlcmlmIiBmb250LXNpemU9IjI4IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0iI2ZmZmZmZiI+w4lRVUlQRTwvdGV4dD48dGV4dCB4PSIxMDAiIHk9IjEyOCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsc2VyaWYiIGZvbnQtc2l6ZT0iMjIiIGZvbnQtc3R5bGU9Iml0YWxpYyIgZmlsbD0iI2YzZDY3YSI+U0VOVElORUxMRTwvdGV4dD48L3N2Zz4=" alt="Équipe Sentinelle" style="width:44px;height:44px;border-radius:10px"></div>
+  <div class="brand-mark"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiB2aWV3Qm94PSIwIDAgMjAwIDIwMCI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIHJ4PSIyNiIgZmlsbD0iIzBlN2VhOCIvPjx0ZXh0IHg9IjEwMCIgeT0iODgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJHZW9yZ2lhLHNlcmlmIiBmb250LXNpemU9IjI4IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0iI2ZmZmZmZiI+w4lRVUlQRTwvdGV4dD48dGV4dCB4PSIxMDAiIHk9IjEyOCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsc2VyaWYiIGZvbnQtc2l6ZT0iMjIiIGZvbnQtc3R5bGU9Iml0YWxpYyIgZmlsbD0iI2YzZDY3YSI+U0VOVElORUxMRTwvdGV4dD48L3N2Zz4=" alt="Équipe Sentinelle"></div>
   <div>
     <div class="brand">SENTI<span class="accent">NELLE</span> CI</div>
     <div class="app-title" id="app-title"><span class="app-title-track" id="app-title-track"><span class="app-title-seg">Plateforme nationale de surveillance des sites miniers et pétroliers · Équipe Sentinelle</span><span class="app-title-seg" aria-hidden="true">Plateforme nationale de surveillance des sites miniers et pétroliers · Équipe Sentinelle</span></span></div>
@@ -809,10 +854,10 @@
     <span class="on" data-menu="dash">⌂ Tableau de bord</span><span data-menu="projets">▤ Projets</span><span data-menu="cartes">🗺 Cartes</span><span data-menu="rapports">▦ Rapports</span><span data-menu="aide">? Aide</span><span data-menu="params">⚙ Paramètres</span>
   </nav>
   <div class="appbar-right">
-    <button class="mobile-toggle" id="btn-toggle-carbone" onclick="ccOpen()" aria-label="Ouvrir le volet Carbone">🌍 Carbone</button>
-    <button class="mobile-toggle" id="btn-toggle-left" onclick="MW_toggleDrawer('left')" aria-label="Ouvrir les filtres et la zone de surveillance">☰ Filtres</button>
-    <button class="mobile-toggle" id="btn-toggle-right" onclick="MW_toggleDrawer('right')" aria-label="Ouvrir le panneau d'analyse et d'alertes">📋 Analyse</button>
-    <button class="mobile-toggle" id="btn-toggle-more" onclick="MW_openMoreMenu()" aria-label="Plus : Tableau de bord, Projets, Aide, Paramètres">⋯ Plus</button>
+    <button class="mobile-toggle" id="btn-toggle-carbone" onclick="ccOpen()" aria-label="Ouvrir le volet Carbone">🌍<span class="mt-label"> Carbone</span></button>
+    <button class="mobile-toggle" id="btn-toggle-left" onclick="MW_toggleDrawer('left')" aria-label="Ouvrir les filtres et la zone de surveillance">☰<span class="mt-label"> Filtres</span></button>
+    <button class="mobile-toggle" id="btn-toggle-right" onclick="MW_toggleDrawer('right')" aria-label="Ouvrir le panneau d'analyse et d'alertes">📋<span class="mt-label"> Analyse</span></button>
+    <button class="mobile-toggle" id="btn-toggle-more" onclick="MW_openMoreMenu()" aria-label="Plus : Tableau de bord, Projets, Aide, Paramètres">⋯<span class="mt-label"> Plus</span></button>
     <span class="live"><span class="dot"></span>SURVEILLANCE ACTIVE</span>
     <select id="role-select" class="role-select" onchange="MW_setRole(this.value); var rm=document.getElementById('role-select-mobile'); if(rm) rm.value=this.value;" title="Sélecteur de rôle — adapte les vues et les habilitations">
       <option value="decideur" selected>👤 Décideur — MMPE</option>
@@ -872,6 +917,7 @@
     </div>
 
     <div class="decideur-only-note">👤 Vue Décideur : les réglages techniques de détection sont pré-configurés par l'équipe opérationnelle. Passez en rôle « Opérateur régional » pour les ajuster.</div>
+    <div class="public-only-note">🌐 Vue Publique : les réglages techniques de détection sont réservés aux rôles opérationnels (Opérateur régional, Régulateur, Décideur).</div>
     <div class="sec-title tech-only"><span class="num">2</span> PARAMÈTRES DE DÉTECTION</div>
     <div class="range-row tech-only"><label>Seuil ΔNDVI</label><input type="range" min="-40" max="-10" value="-25" id="rg-ndvi"><output id="o-ndvi">-0.25</output></div>
     <div class="range-row tech-only"><label>Seuil ΔBSI</label><input type="range" min="5" max="25" value="10" id="rg-bsi"><output id="o-bsi">+0.10</output></div>
@@ -1371,35 +1417,40 @@
           <div class="ccard">
             <h3>🧫 DBO5 — Demande biochimique en oxygène — 6 derniers prélèvements</h3>
             <div class="sub">mg/L O₂ · paramètre demandé par le CIAPOL · amont (référence) vs aval du site · <span class="dq mesure" title="Prélèvement ponctuel envoyé en laboratoire — la DBO5 demande 5 jours d'incubation, pas de mesure en continu par capteur">PRÉLÈVEMENT LABO</span></div>
-            <div class="chart-wrap" id="chart-dbo5"></div>
-            <div class="legend" id="legend-dbo5"></div>
+            <div class="lab-detail"><div class="chart-wrap" id="chart-dbo5"></div>
+            <div class="legend" id="legend-dbo5"></div></div>
+            <div class="lab-public-status"><span class="lvl ok" id="pub-badge-dbo5">—</span><div class="lab-status-note">Statut de conformité uniquement. Le détail des mesures est réservé aux rôles Décideur, Opérateur régional et Régulateur.</div></div>
           </div>
           <div class="ccard">
             <h3>🧫 DCO — Demande chimique en oxygène — 6 derniers prélèvements</h3>
             <div class="sub">mg/L O₂ · paramètre demandé par le CIAPOL · amont (référence) vs aval du site · <span class="dq mesure" title="Prélèvement ponctuel envoyé en laboratoire, pas de mesure en continu par capteur">PRÉLÈVEMENT LABO</span></div>
-            <div class="chart-wrap" id="chart-dco"></div>
-            <div class="legend" id="legend-dco"></div>
+            <div class="lab-detail"><div class="chart-wrap" id="chart-dco"></div>
+            <div class="legend" id="legend-dco"></div></div>
+            <div class="lab-public-status"><span class="lvl ok" id="pub-badge-dco">—</span><div class="lab-status-note">Statut de conformité uniquement. Le détail des mesures est réservé aux rôles Décideur, Opérateur régional et Régulateur.</div></div>
           </div>
           <div class="ccard">
             <h3>🌫 Matières en suspension (MES) — 6 derniers prélèvements</h3>
             <div class="sub">mg/L · paramètre demandé par le CIAPOL · amont (référence) vs aval du site · <span class="dq mesure" title="Prélèvement ponctuel envoyé en laboratoire (méthode gravimétrique), pas de mesure en continu par capteur">PRÉLÈVEMENT LABO</span></div>
-            <div class="chart-wrap" id="chart-mes"></div>
-            <div class="legend" id="legend-mes"></div>
+            <div class="lab-detail"><div class="chart-wrap" id="chart-mes"></div>
+            <div class="legend" id="legend-mes"></div></div>
+            <div class="lab-public-status"><span class="lvl ok" id="pub-badge-mes">—</span><div class="lab-status-note">Statut de conformité uniquement. Le détail des mesures est réservé aux rôles Décideur, Opérateur régional et Régulateur.</div></div>
           </div>
           <div class="ccard">
             <h3>☿ Mercure (Hg) — 6 derniers prélèvements</h3>
             <div class="sub">µg/L · signature caractéristique de l'amalgamation utilisée en orpaillage artisanal · amont (référence) vs aval du site · <span class="dq mesure" title="Analyse de laboratoire spécialisée (spectrométrie), pas de mesure en continu par capteur">PRÉLÈVEMENT LABO</span></div>
-            <div class="chart-wrap" id="chart-hg"></div>
-            <div class="legend" id="legend-hg"></div>
+            <div class="lab-detail"><div class="chart-wrap" id="chart-hg"></div>
+            <div class="legend" id="legend-hg"></div></div>
+            <div class="lab-public-status"><span class="lvl ok" id="pub-badge-hg">—</span><div class="lab-status-note">Statut de conformité uniquement. Le détail des mesures est réservé aux rôles Décideur, Opérateur régional et Régulateur.</div></div>
           </div>
           <div class="ccard">
             <h3>🧪 Cyanure (CN⁻) — 6 derniers prélèvements</h3>
             <div class="sub">µg/L · utilisé en lixiviation (traitement du minerai aurifère, notamment industriel) · amont (référence) vs aval du site · <span class="dq mesure" title="Analyse de laboratoire spécialisée, pas de mesure en continu par capteur">PRÉLÈVEMENT LABO</span></div>
-            <div class="chart-wrap" id="chart-cn"></div>
-            <div class="legend" id="legend-cn"></div>
+            <div class="lab-detail"><div class="chart-wrap" id="chart-cn"></div>
+            <div class="legend" id="legend-cn"></div></div>
+            <div class="lab-public-status"><span class="lvl ok" id="pub-badge-cn">—</span><div class="lab-status-note">Statut de conformité uniquement. Le détail des mesures est réservé aux rôles Décideur, Opérateur régional et Régulateur.</div></div>
           </div>
         </div>
-        <div class="dq-legend">☿🧪 Repères indicatifs : mercure 6 µg/L (valeur guide OMS 2022, eau potable) ; cyanure 70 µg/L (ancienne valeur guide OMS — l'OMS ne fixe plus de valeur guide continue pour le cyanure depuis les éditions récentes, seulement un seuil d'urgence à court terme de 500 µg/L). Comme le reste de la plateforme, les niveaux affichés ici sont des données de démonstration.</div>
+        <div class="dq-legend">☿🧪 Repères indicatifs : mercure 6 µg/L (valeur guide OMS 2022, eau potable) ; cyanure 70 µg/L (ancienne valeur guide OMS — l'OMS ne fixe plus de valeur guide continue pour le cyanure depuis les éditions récentes, seulement un seuil d'urgence à court terme de 500 µg/L). Comme le reste de la plateforme, les niveaux affichés ici sont des données de démonstration. En rôle Public, ces 5 paramètres de laboratoire (DBO5, DCO, MES, mercure, cyanure) n'affichent qu'un statut de conformité — le détail chiffré est réservé aux rôles Décideur, Opérateur régional et Régulateur.</div>
         <div class="ccard">
           <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 14px">
             <h3 style="margin:0">🌬 QUALITÉ DE L'AIR — poussières et gaz (exigences CIAPOL)</h3>
@@ -1932,6 +1983,11 @@
       document.querySelectorAll('.view').forEach(function (x) { x.classList.remove('on'); });
       t.classList.add('on');
       document.getElementById(t.getAttribute('data-view')).classList.add('on');
+      /* Sur téléphone, la barre d'onglets défile horizontalement : sans ça, l'onglet
+         qu'on vient de choisir peut rester à moitié hors champ. */
+      if (window.innerWidth <= 1100 && typeof t.scrollIntoView === 'function') {
+        t.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }
     });
   });
 
@@ -2382,6 +2438,20 @@
         { name: z.amont, short: 'Amont', color: v('--series-1'), data: s.cnAmont, lblOffset: 11 }
       ]
     });
+    /* Statut de conformité simplifié pour le rôle Public — dernier prélèvement aval vs repère indicatif. */
+    function pubStatus(id, lastVal, threshold) {
+      var badge = document.getElementById('pub-badge-' + id);
+      if (!badge || lastVal == null) return;
+      var over = lastVal > threshold;
+      badge.textContent = over ? '⚠ DÉPASSEMENT DU REPÈRE' : '✓ CONFORME AU REPÈRE INDICATIF';
+      badge.className = 'lvl ' + (over ? 'moyen' : 'ok');
+    }
+    pubStatus('dbo5', s.dbo5Aval[s.dbo5Aval.length - 1], 30);
+    pubStatus('dco', s.dcoAval[s.dcoAval.length - 1], 120);
+    pubStatus('mes', s.mesAval[s.mesAval.length - 1], 35);
+    pubStatus('hg', s.hgAval[s.hgAval.length - 1], 6);
+    pubStatus('cn', s.cnAval[s.cnAval.length - 1], 70);
+
     var popEl = document.getElementById('socio-pop'), popDEl = document.getElementById('socio-pop-d');
     if (popEl) {
       popEl.textContent = z.pop.toLocaleString('fr-FR');
